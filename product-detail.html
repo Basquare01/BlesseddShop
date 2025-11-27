@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Detail - BlessedShop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-gray-800 text-white p-4 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">🙏 BlessedShop</h1>
+            <div class="flex gap-6">
+                <a href="index.html" class="hover:text-gray-300">Home</a>
+                <a href="products.html" class="hover:text-gray-300">Products</a>
+                <a href="cart.html" class="hover:text-gray-300">Cart</a>
+                <a href="profile.html" class="hover:text-gray-300" id="profileLink">Profile</a>
+                <button id="logoutBtn" class="hover:text-gray-300 hidden">Logout</button>
+                <a href="login.html" class="hover:text-gray-300" id="loginLink">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Product Detail -->
+    <section class="py-12 bg-gray-100 min-h-screen">
+        <div class="max-w-6xl mx-auto">
+            <a href="products.html" class="text-blue-600 hover:underline mb-6">&larr; Back to Products</a>
+            
+            <div id="productDetail" class="bg-white rounded-lg shadow-lg p-8">
+                <!-- Product detail loaded dynamically -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white p-6 text-center">
+        <p>&copy; 2025 ShopHub. All rights reserved.</p>
+    </footer>
+
+    <script src="js/firebase.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/cart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = new URLSearchParams(window.location.search);
+            const productId = params.get('id');
+            
+            if (!productId) {
+                document.getElementById('productDetail').innerHTML = '<p class="text-red-600">Product not found!</p>';
+                return;
+            }
+
+            const product = await getProductById(productId);
+            
+            if (!product) {
+                document.getElementById('productDetail').innerHTML = '<p class="text-red-600">Product not found!</p>';
+                return;
+            }
+
+            document.getElementById('productDetail').innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <img src="${product.image}" alt="${product.name}" class="w-full rounded-lg object-cover h-96">
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold mb-4">${product.name}</h1>
+                        <p class="text-gray-600 text-lg mb-4">${product.description}</p>
+                        <p class="text-gray-500 mb-2"><strong>Category:</strong> ${product.category}</p>
+                        <p class="text-gray-500 mb-2"><strong>Stock:</strong> ${product.stock || 'Available'}</p>
+                        <p class="text-blue-600 font-bold text-4xl mb-8">$${product.price}</p>
+                        
+                        <div class="flex gap-4">
+                            <input type="number" id="quantity" class="border rounded-lg px-4 py-2 w-20" value="1" min="1">
+                            <button onclick="addToCart('${product.id}', ${product.price})" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 font-bold">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html>

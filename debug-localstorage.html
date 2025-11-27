@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalStorage Debugger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-gray-800 text-white p-4">
+        <div class="max-w-6xl mx-auto flex justify-between">
+            <h1 class="text-2xl font-bold">LocalStorage Inspector</h1>
+            <a href="index.html" class="hover:text-gray-300">Home</a>
+        </div>
+    </nav>
+
+    <section class="py-12">
+        <div class="max-w-6xl mx-auto px-4">
+            <h2 class="text-3xl font-bold mb-8">📦 All LocalStorage Data</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div id="storageContainer" class="space-y-4">
+                    <!-- Generated dynamically -->
+                </div>
+            </div>
+
+            <div class="mt-8 bg-white p-6 rounded-lg shadow">
+                <h3 class="text-2xl font-bold mb-4">Quick Actions</h3>
+                <button onclick="clearAllStorage()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Clear All Storage</button>
+                <button onclick="location.reload()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 ml-2">Refresh</button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            displayAllStorage();
+        });
+
+        function displayAllStorage() {
+            const container = document.getElementById('storageContainer');
+            const keys = Object.keys(localStorage);
+            
+            if (keys.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">No data in localStorage</p>';
+                return;
+            }
+
+            container.innerHTML = keys.map(key => {
+                let value;
+                try {
+                    value = JSON.parse(localStorage.getItem(key));
+                } catch {
+                    value = localStorage.getItem(key);
+                }
+                
+                const dataStr = typeof value === 'object' ? JSON.stringify(value, null, 2) : value;
+                const itemCount = Array.isArray(value) ? ` (${value.length} items)` : '';
+                
+                return `
+                    <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-600">
+                        <h3 class="text-lg font-bold text-blue-600 mb-2">${key}${itemCount}</h3>
+                        <pre class="bg-gray-100 p-4 rounded text-xs overflow-auto max-h-96"><code>${dataStr}</code></pre>
+                        <button onclick="copyToClipboard('${key}')" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm mt-2">Copy</button>
+                        <button onclick="deleteKey('${key}')" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm mt-2 ml-2">Delete</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function copyToClipboard(key) {
+            const value = localStorage.getItem(key);
+            navigator.clipboard.writeText(value);
+            alert('Copied to clipboard!');
+        }
+
+        function deleteKey(key) {
+            if (confirm(`Delete ${key}?`)) {
+                localStorage.removeItem(key);
+                displayAllStorage();
+            }
+        }
+
+        function clearAllStorage() {
+            if (confirm('Clear ALL localStorage data? This cannot be undone!')) {
+                localStorage.clear();
+                displayAllStorage();
+            }
+        }
+    </script>
+</body>
+</html>

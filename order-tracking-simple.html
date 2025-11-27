@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Order Tracking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <nav class="bg-gray-800 text-white p-4 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">🙏 BlessedShop - Simple Order Tracking</h1>
+            <div class="flex gap-6">
+                <a href="admin.html" class="hover:text-gray-300">Dashboard</a>
+                <a href="order-tracking.html" class="hover:text-gray-300">Full Tracking</a>
+                <button id="logoutBtn" class="hover:text-gray-300">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <section class="py-12 bg-gray-100 min-h-screen">
+        <div class="max-w-6xl mx-auto px-4">
+            <h2 class="text-3xl font-bold mb-8">📦 All Orders (Direct LocalStorage Read)</h2>
+
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-bold">Order ID</th>
+                                <th class="px-4 py-3 text-left font-bold">Customer</th>
+                                <th class="px-4 py-3 text-left font-bold">Email</th>
+                                <th class="px-4 py-3 text-left font-bold">Amount (₦)</th>
+                                <th class="px-4 py-3 text-left font-bold">Status</th>
+                                <th class="px-4 py-3 text-left font-bold">Type</th>
+                                <th class="px-4 py-3 text-left font-bold">Date</th>
+                                <th class="px-4 py-3 text-left font-bold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTable" class="divide-y">
+                            <tr>
+                                <td colspan="8" class="px-4 py-6 text-center text-gray-500">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mt-8 bg-white p-6 rounded-lg shadow">
+                <h3 class="text-xl font-bold mb-4">Debug Info</h3>
+                <div class="space-y-2 text-sm">
+                    <p><strong>Orders in localStorage.orders:</strong> <span id="countOrders" class="text-blue-600 font-bold">0</span></p>
+                    <p><strong>Pending in localStorage.pendingBankTransfers:</strong> <span id="countPending" class="text-orange-600 font-bold">0</span></p>
+                    <p><strong>Total combined:</strong> <span id="countTotal" class="text-green-600 font-bold">0</span></p>
+                </div>
+                <button onclick="reloadOrders()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4">Refresh Orders</button>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-800 text-white p-6 text-center mt-12">
+        <p>&copy; 2025 BlessedShop. All rights reserved.</p>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script>
+        let allOrders = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = getCurrentUser();
+            if (!user || user.email !== 'admin@blessedshop.com') {
+                alert('Access denied! Admin only.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            reloadOrders();
+        });
+
+        function reloadOrders() {
+            console.log('=== Loading Orders from LocalStorage ===');
+            
+            // Read directly from localStorage
+            const localOrders = JSON.parse(localStorage.getItem('orders')) || [];
+            const pendingOrders = JSON.parse(localStorage.getItem('pendingBankTransfers')) || [];
+            
+            console.log('orders:', localOrders);
+            console.log('pendingBankTransfers:', pendingOrders);
+            
+            // Combine
+            allOrders = [];
+            
+            // Add regular orders
+            for (const order of localOrders) {
+                allOrders.push({...order, type: 'Regular'});
+            }
+            
+            // Add pending bank transfers
+            for (const order of pendingOrders) {
+                allOrders.push({...order, type: 'Bank Transfer'});
+            }
+            
+            console.log('Combined orders:', allOrders);
+            
+            // Update counts
+            document.getElementById('countOrders').textContent = localOrders.length;
+            document.getElementById('countPending').textContent = pendingOrders.length;
+            document.getElementById('countTotal').textContent = allOrders.length;
+            
+            displayOrders(allOrders);
+        }
+
+        function displayOrders(orders) {
+            const tbody = document.getElementById('ordersTable');
+            
+            if (!orders || orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-6 text-center text-gray-500">No orders found</td></tr>';
+                return;
+            }
+
+            const rows = [];
+            for (const order of orders) {
+                try {
+                    const id = order.id || '(no-id)';
+                    const firstName = (order.customer && order.customer.firstName) || '';
+                    const lastName = (order.customer && order.customer.lastName) || '';
+                    const email = (order.customer && order.customer.email) || 'N/A';
+                    const total = (order.amounts && order.amounts.total) || 0;
+                    const status = order.status || 'pending';
+                    const type = order.type || 'Unknown';
+                    const createdAt = order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A';
+                    
+                    rows.push(`
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 font-bold text-blue-600">${id}</td>
+                            <td class="px-4 py-3">${firstName} ${lastName}</td>
+                            <td class="px-4 py-3">${email}</td>
+                            <td class="px-4 py-3 font-bold">₦${Number(total).toLocaleString()}</td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 rounded text-xs font-bold ${status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${status}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">
+                                    ${type}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3">${createdAt}</td>
+                            <td class="px-4 py-3">
+                                <button onclick="confirmOrder('${id}')" class="bg-green-600 text-white px-2 py-1 rounded text-xs hover:bg-green-700 font-bold">Confirm</button>
+                            </td>
+                        </tr>
+                    `);
+                } catch (err) {
+                    console.error('Error rendering order:', order, err);
+                }
+            }
+            
+            tbody.innerHTML = rows.join('') || '<tr><td colspan="8" class="px-4 py-6 text-center text-gray-500">No orders found</td></tr>';
+        }
+
+        function confirmOrder(orderId) {
+            if (!confirm('Mark this order as completed?')) return;
+            
+            // Update in orders
+            let orders = JSON.parse(localStorage.getItem('orders')) || [];
+            const idx = orders.findIndex(o => o.id === orderId);
+            if (idx !== -1) {
+                orders[idx].status = 'completed';
+                localStorage.setItem('orders', JSON.stringify(orders));
+            }
+            
+            // Update in pendingBankTransfers
+            let pending = JSON.parse(localStorage.getItem('pendingBankTransfers')) || [];
+            const pidx = pending.findIndex(o => o.id === orderId);
+            if (pidx !== -1) {
+                pending[pidx].status = 'completed';
+                localStorage.setItem('pendingBankTransfers', JSON.stringify(pending));
+            }
+            
+            alert('Order marked as completed!');
+            reloadOrders();
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await logoutUser();
+        });
+    </script>
+</body>
+</html>

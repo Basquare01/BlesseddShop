@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - BlessedShop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <!-- Navigation -->
+    <nav class="bg-gray-800 text-white p-4 fixed top-0 w-full z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold">🙏 BlessedShop</a>
+            <div class="flex gap-6">
+                <a href="index.html" class="hover:text-gray-300">Home</a>
+                <a href="login.html" class="hover:text-gray-300">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Register Form -->
+    <div class="mt-16 w-full max-w-md">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-2xl font-bold mb-6 text-center">Register</h2>
+            <form id="registerForm" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Full Name</label>
+                    <input type="text" id="registerName" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:border-blue-600" placeholder="Enter your full name" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Email</label>
+                    <input type="email" id="registerEmail" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:border-blue-600" placeholder="Enter your email" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Password</label>
+                    <input type="password" id="registerPassword" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:border-blue-600" placeholder="Enter your password" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Confirm Password</label>
+                    <input type="password" id="confirmPassword" class="w-full border rounded-lg px-4 py-2 focus:outline-none focus:border-blue-600" placeholder="Confirm your password" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition">Register</button>
+            </form>
+            <p class="text-center text-gray-600 mt-4">Already have an account? <a href="login.html" class="text-blue-600 font-bold hover:underline">Login here</a></p>
+            <div id="registerError" class="text-red-600 text-center mt-4 hidden"></div>
+        </div>
+    </div>
+
+    <script src="js/firebase.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                document.getElementById('registerError').textContent = 'Passwords do not match!';
+                document.getElementById('registerError').classList.remove('hidden');
+                return;
+            }
+            
+            await registerUser(email, password, name);
+        });
+    </script>
+</body>
+</html>

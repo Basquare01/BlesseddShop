@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlessedShop - Storage Debug Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Courier New', monospace; }
+        .debug-section { background: #f5f5f5; border: 1px solid #ddd; padding: 12px; margin: 10px 0; border-radius: 4px; }
+        .key-value { display: flex; gap: 20px; margin: 8px 0; padding: 8px; background: white; border-left: 3px solid #0066cc; }
+        .key { font-weight: bold; color: #0066cc; min-width: 150px; }
+        .value { color: #333; flex: 1; word-break: break-all; }
+        button { padding: 8px 12px; margin: 5px; cursor: pointer; font-weight: bold; border: none; border-radius: 4px; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-info { background: #17a2b8; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .alert { padding: 12px; margin: 10px 0; border-radius: 4px; }
+        .alert-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .code-block { background: #2d2d2d; color: #f8f8f2; padding: 12px; border-radius: 4px; overflow-x: auto; margin: 10px 0; }
+        h2 { border-bottom: 2px solid #0066cc; padding-bottom: 8px; margin: 20px 0 10px 0; }
+        h3 { color: #0066cc; margin-top: 15px; }
+    </style>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-4xl font-bold mb-4">🔍 BlessedShop Storage Debug Tool</h1>
+        <p class="text-gray-600 mb-6">Check and manage all localStorage data for debugging</p>
+
+        <!-- Navigation -->
+        <nav class="bg-gray-800 text-white p-4 rounded mb-6 flex gap-2 flex-wrap">
+            <button onclick="viewAllStorage()" class="btn-info">📊 View All Storage</button>
+            <button onclick="viewPendingOrders()" class="btn-warning">⏳ View Pending Orders</button>
+            <button onclick="viewUsers()" class="btn-info">👥 View Users</button>
+            <button onclick="viewCart()" class="btn-info">🛒 View Cart</button>
+            <button onclick="viewOrders()" class="btn-info">📦 View Orders</button>
+            <button onclick="refreshPage()" class="btn-success">🔄 Refresh</button>
+            <button onclick="clearAllStorage()" class="btn-danger">🗑️ Clear ALL Storage</button>
+        </nav>
+
+        <!-- Status -->
+        <div id="statusArea" class="alert alert-info"></div>
+
+        <!-- Debug Output -->
+        <div id="debugOutput" class="debug-section">
+            <p class="text-gray-500">Select an option above to view storage data...</p>
+        </div>
+
+        <!-- Test Section -->
+        <h2>Test Data Tools</h2>
+        <div class="debug-section">
+            <button onclick="createTestPendingOrder()" class="btn-success">➕ Create Test Pending Order</button>
+            <button onclick="createTestUser()" class="btn-success">➕ Create Test User</button>
+            <button onclick="loginAsAdmin()" class="btn-warning">👤 Login as Admin</button>
+            <button onclick="clearPendingOrders()" class="btn-danger">🗑️ Clear Pending Orders Only</button>
+        </div>
+
+        <!-- Copy to Clipboard -->
+        <h2>Export/Import</h2>
+        <div class="debug-section">
+            <button onclick="exportAllStorage()" class="btn-info">📥 Export All Storage as JSON</button>
+            <textarea id="exportArea" style="width: 100%; height: 150px; padding: 10px; margin: 10px 0; font-family: monospace; border: 1px solid #ddd; border-radius: 4px;" readonly></textarea>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        function formatJSON(obj) {
+            return JSON.stringify(obj, null, 2);
+        }
+
+        function showStatus(message, type = 'info') {
+            const statusArea = document.getElementById('statusArea');
+            statusArea.className = `alert alert-${type}`;
+            statusArea.innerHTML = `<strong>${type.toUpperCase()}:</strong> ${message}`;
+        }
+
+        function displayData(title, data) {
+            const output = document.getElementById('debugOutput');
+            if (Array.isArray(data) && data.length > 0) {
+                output.innerHTML = `
+                    <h3>${title}</h3>
+                    <p class="text-gray-600">Count: ${data.length}</p>
+                    <div class="code-block">
+                        <pre>${formatJSON(data)}</pre>
+                    </div>
+                `;
+            } else if (typeof data === 'object' && Object.keys(data).length > 0) {
+                output.innerHTML = `
+                    <h3>${title}</h3>
+                    <div class="code-block">
+                        <pre>${formatJSON(data)}</pre>
+                    </div>
+                `;
+            } else {
+                output.innerHTML = `<div class="alert alert-info"><strong>No data found</strong> for ${title}</div>`;
+                showStatus(`${title} is empty or not found`, 'info');
+            }
+        }
+
+        function viewAllStorage() {
+            const allStorage = {};
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    try {
+                        allStorage[key] = JSON.parse(localStorage.getItem(key));
+                    } catch (e) {
+                        allStorage[key] = localStorage.getItem(key);
+                    }
+                }
+            }
+            displayData('📊 All Local Storage', allStorage);
+            showStatus(`Total storage keys: ${Object.keys(allStorage).length}`, 'info');
+        }
+
+        function viewPendingOrders() {
+            const pending = JSON.parse(localStorage.getItem('pendingBankTransfers')) || [];
+            displayData('⏳ Pending Bank Transfer Orders', pending);
+            if (pending.length === 0) {
+                showStatus('No pending orders found in storage', 'danger');
+            } else {
+                showStatus(`Found ${pending.length} pending order(s)`, 'success');
+            }
+        }
+
+        function viewUsers() {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            displayData('👥 Registered Users', users);
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (currentUser) {
+                console.log('Current logged-in user:', currentUser);
+            }
+        }
+
+        function viewCart() {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            displayData('🛒 Shopping Cart', cart);
+        }
+
+        function viewOrders() {
+            const orders = JSON.parse(localStorage.getItem('orders')) || [];
+            displayData('📦 Completed Orders', orders);
+        }
+
+        function createTestPendingOrder() {
+            const testOrder = {
+                id: 'BS_TEST_' + Date.now(),
+                status: 'pending_verification',
+                customer: {
+                    firstName: 'Test',
+                    lastName: 'Customer',
+                    email: 'test' + Date.now() + '@example.com'
+                },
+                amounts: {
+                    total: 50000,
+                    subtotal: 45454.55,
+                    shipping: 0,
+                    tax: 4545.45
+                },
+                items: [{name: 'Test Product', quantity: 1, price: 45454.55}],
+                createdAt: new Date().toISOString(),
+                paymentProof: null,
+                paymentMethod: 'bank_transfer',
+                bankDetails: {
+                    bank: 'Access Bank',
+                    accountName: 'Bilal Sulaiman Hassan',
+                    accountNumber: '1232279123',
+                    reference: 'BS_TEST_' + Date.now()
+                }
+            };
+
+            const pending = JSON.parse(localStorage.getItem('pendingBankTransfers')) || [];
+            pending.push(testOrder);
+            localStorage.setItem('pendingBankTransfers', JSON.stringify(pending));
+
+            showStatus(`✅ Test pending order created: ${testOrder.id}`, 'success');
+            viewPendingOrders();
+        }
+
+        function createTestUser() {
+            const testUser = {
+                uid: 'test-' + Date.now(),
+                email: 'testuser' + Date.now() + '@blessedshop.com',
+                displayName: 'Test User ' + Math.random().toString(36).substr(2, 9),
+                password: btoa('password123'),
+                createdAt: new Date().toISOString()
+            };
+
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            users.push(testUser);
+            localStorage.setItem('users', JSON.stringify(users));
+
+            showStatus(`✅ Test user created: ${testUser.email}`, 'success');
+            viewUsers();
+        }
+
+        function loginAsAdmin() {
+            const adminUser = {
+                uid: 'admin-001',
+                email: 'admin@blessedshop.com',
+                displayName: 'Admin',
+                password: btoa('admin123'),
+                createdAt: new Date().toISOString(),
+                isAdmin: true
+            };
+
+            localStorage.setItem('currentUser', JSON.stringify(adminUser));
+            showStatus(`✅ Logged in as admin@blessedshop.com`, 'success');
+            console.log('Admin user set. Refresh page or navigate to admin.html');
+        }
+
+        function clearPendingOrders() {
+            if (confirm('Are you sure you want to delete ALL pending orders?')) {
+                localStorage.removeItem('pendingBankTransfers');
+                showStatus('🗑️ All pending orders cleared', 'danger');
+                viewPendingOrders();
+            }
+        }
+
+        function clearAllStorage() {
+            if (confirm('⚠️ WARNING: This will delete EVERYTHING!\n\nAre you absolutely sure?')) {
+                if (confirm('Last confirmation: Delete all localStorage data?')) {
+                    localStorage.clear();
+                    showStatus('🗑️ All storage cleared! Page will refresh...', 'danger');
+                    setTimeout(() => location.reload(), 2000);
+                }
+            }
+        }
+
+        function exportAllStorage() {
+            const allStorage = {};
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    try {
+                        allStorage[key] = JSON.parse(localStorage.getItem(key));
+                    } catch (e) {
+                        allStorage[key] = localStorage.getItem(key);
+                    }
+                }
+            }
+            const exportText = JSON.stringify(allStorage, null, 2);
+            document.getElementById('exportArea').value = exportText;
+            showStatus('✅ Storage exported to textarea. You can copy it now.', 'success');
+        }
+
+        function refreshPage() {
+            location.reload();
+        }
+
+        // Initial load
+        window.addEventListener('load', () => {
+            showStatus('🟢 Debug tool ready. Click buttons above to inspect storage.', 'info');
+        });
+    </script>
+</body>
+</html>

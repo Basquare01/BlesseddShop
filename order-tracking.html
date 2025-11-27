@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Tracking - BlessedShop Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-gray-800 text-white p-4 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">🙏 BlessedShop - Order Tracking</h1>
+            <div class="flex gap-6">
+                <a href="admin.html" class="hover:text-gray-300">Dashboard</a>
+                <button id="logoutBtn" class="hover:text-gray-300">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Order Tracking Section -->
+    <section class="py-12 bg-gray-100 min-h-screen">
+        <div class="max-w-6xl mx-auto px-4">
+            <h2 class="text-3xl font-bold mb-8">📦 Order Tracking</h2>
+
+            <!-- Search & Filter -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="searchOrder" placeholder="Search by Order ID or Email" class="border rounded-lg px-4 py-2">
+                    <select id="statusFilter" class="border rounded-lg px-4 py-2">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="pending_verification">Pending Verification</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                    <button onclick="applyFilters()" class="bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold">Search</button>
+                </div>
+            </div>
+
+            <!-- Orders List -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-bold">Order ID</th>
+                                <th class="px-4 py-3 text-left font-bold">Customer</th>
+                                <th class="px-4 py-3 text-left font-bold">Email</th>
+                                <th class="px-4 py-3 text-left font-bold">Amount (₦)</th>
+                                <th class="px-4 py-3 text-left font-bold">Items</th>
+                                <th class="px-4 py-3 text-left font-bold">Status</th>
+                                <th class="px-4 py-3 text-left font-bold">Type</th>
+                                <th class="px-4 py-3 text-left font-bold">Date</th>
+                                <th class="px-4 py-3 text-left font-bold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTable" class="divide-y">
+                            <tr>
+                                <td colspan="9" class="px-4 py-6 text-center text-gray-500">Loading orders...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <p class="text-gray-600 text-sm">Total Orders</p>
+                    <p id="statTotalOrders" class="text-3xl font-bold text-blue-600">0</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <p class="text-gray-600 text-sm">Total Revenue</p>
+                    <p id="statTotalRevenue" class="text-3xl font-bold text-green-600">₦0</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <p class="text-gray-600 text-sm">Completed</p>
+                    <p id="statCompleted" class="text-3xl font-bold text-yellow-600">0</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <p class="text-gray-600 text-sm">Pending</p>
+                    <p id="statPending" class="text-3xl font-bold text-orange-600">0</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Order Detail Modal -->
+    <div id="orderModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="sticky top-0 bg-gray-100 p-6 border-b flex justify-between items-center">
+                <h3 id="modalTitle" class="text-2xl font-bold">Order Details</h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+            <div id="modalContent" class="p-6">
+                <!-- Content loaded dynamically -->
+            </div>
+            <div class="bg-gray-100 p-6 flex gap-4">
+                <button onclick="closeModal()" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 font-bold">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white p-6 text-center">
+        <p>&copy; 2025 BlessedShop. All rights reserved.</p>
+    </footer>
+
+    <script src="js/auth.js"></script>
+    <script>
+        let allOrdersData = [];
+        let currentOrderIdModal = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = getCurrentUser();
+            
+            if (!user || user.email !== 'admin@blessedshop.com') {
+                alert('Access denied! Admin only.');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            loadOrders();
+            updateStatistics();
+        });
+
+        function loadOrders() {
+            console.log('Loading orders from localStorage...');
+            
+            // Read directly from localStorage
+            const localOrders = JSON.parse(localStorage.getItem('orders')) || [];
+            const pendingOrders = JSON.parse(localStorage.getItem('pendingBankTransfers')) || [];
+            
+            console.log('Regular orders:', localOrders);
+            console.log('Pending bank transfers:', pendingOrders);
+            
+            // Combine
+            allOrdersData = [];
+            
+            // Add regular orders
+            for (const order of localOrders) {
+                allOrdersData.push({...order, type: 'Regular Order'});
+            }
+            
+            // Add pending bank transfers
+            for (const order of pendingOrders) {
+                allOrdersData.push({...order, type: 'Bank Transfer'});
+            }
+            
+            console.log('Combined orders:', allOrdersData);
+            
+            displayOrders(allOrdersData);
+        }
+
+        function displayOrders(orders) {
+            const tbody = document.getElementById('ordersTable');
+            
+            if (!orders || orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="px-4 py-6 text-center text-gray-500">No orders found</td></tr>';
+                return;
+            }
+
+            const rows = [];
+            for (const order of orders) {
+                try {
+                    if (!order || !order.id) continue;
+                    
+                    const firstName = (order.customer && order.customer.firstName) || '';
+                    const lastName = (order.customer && order.customer.lastName) || '';
+                    const email = (order.customer && order.customer.email) || 'N/A';
+                    const total = (order.amounts && order.amounts.total) || 0;
+                    const itemsCount = (order.items && order.items.length) || 0;
+                    const status = order.status || 'pending';
+                    const type = order.type || 'Unknown';
+                    const createdAt = order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A';
+                    
+                    rows.push(`
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-4 py-3 font-bold text-blue-600">${order.id}</td>
+                            <td class="px-4 py-3">${firstName} ${lastName}</td>
+                            <td class="px-4 py-3">${email}</td>
+                            <td class="px-4 py-3 font-bold">₦${Number(total).toLocaleString()}</td>
+                            <td class="px-4 py-3">${itemsCount} items</td>
+                            <td class="px-4 py-3">
+                                <span class="px-3 py-1 rounded-full text-sm font-bold ${status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${status.charAt(0).toUpperCase() + status.slice(1)}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">
+                                    ${type}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3">${createdAt}</td>
+                            <td class="px-4 py-3 space-x-2 flex flex-wrap gap-1">
+                                <button onclick="viewOrderDetails('${order.id}')" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm font-bold">View</button>
+                                ${(status === 'pending' || status === 'pending_verification') ? `<button onclick="confirmBankTransfer('${order.id}')" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm font-bold">Confirm</button>` : ''}
+                            </td>
+                        </tr>
+                    `);
+                } catch (rowErr) {
+                    console.warn('Error rendering order row:', order, rowErr);
+                }
+            }
+            
+            tbody.innerHTML = rows.join('') || '<tr><td colspan="9" class="px-4 py-6 text-center text-gray-500">No orders found</td></tr>';
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchOrder').value.toLowerCase();
+            const statusTerm = document.getElementById('statusFilter').value;
+
+            let filtered = allOrdersData;
+
+            if (searchTerm) {
+                filtered = filtered.filter(o => 
+                    o.id.toLowerCase().includes(searchTerm) ||
+                    (o.customer && o.customer.email && o.customer.email.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            if (statusTerm) {
+                filtered = filtered.filter(o => o.status === statusTerm);
+            }
+
+            displayOrders(filtered);
+        }
+
+        function viewOrderDetails(orderId) {
+            const order = allOrdersData.find(o => o.id === orderId);
+            if (!order) return;
+
+            currentOrderIdModal = orderId;
+
+            const itemsHTML = (order.items || []).map(item => `
+                <tr class="border-b">
+                    <td class="px-4 py-2">${item.name || 'Unknown'}</td>
+                    <td class="px-4 py-2">${item.quantity || 0}</td>
+                    <td class="px-4 py-2">₦${(item.price || 0).toLocaleString()}</td>
+                    <td class="px-4 py-2 font-bold">₦${((item.price || 0) * (item.quantity || 0)).toLocaleString()}</td>
+                </tr>
+            `).join('');
+
+            const modalContent = `
+                <div class="space-y-6">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <p class="text-gray-600 text-sm">Order ID</p>
+                            <p class="text-lg font-bold">${order.id}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 text-sm">Status</p>
+                            <p class="text-lg font-bold">${order.status}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-gray-600 text-sm font-bold mb-2">Customer Information</p>
+                        <p><strong>Name:</strong> ${order.customer ? (order.customer.firstName + ' ' + order.customer.lastName) : 'N/A'}</p>
+                        <p><strong>Email:</strong> ${order.customer ? order.customer.email : 'N/A'}</p>
+                        <p><strong>Phone:</strong> ${order.customer ? (order.customer.phone || 'N/A') : 'N/A'}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-gray-600 text-sm font-bold mb-2">Shipping Address</p>
+                        <p>${order.shipping ? order.shipping.address : 'N/A'}</p>
+                        <p>${order.shipping ? (order.shipping.city + ', ' + order.shipping.state + ' ' + order.shipping.zipcode) : 'N/A'}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-gray-600 text-sm font-bold mb-2">Items</p>
+                        <table class="w-full border">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">Product</th>
+                                    <th class="px-4 py-2 text-left">Qty</th>
+                                    <th class="px-4 py-2 text-left">Price</th>
+                                    <th class="px-4 py-2 text-left">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${itemsHTML}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg space-y-2">
+                        <div class="flex justify-between">
+                            <span>Subtotal:</span>
+                            <span>₦${order.amounts ? order.amounts.subtotal.toLocaleString() : '0'}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Shipping:</span>
+                            <span>₦${order.amounts ? order.amounts.shipping.toLocaleString() : '0'}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Tax:</span>
+                            <span>₦${order.amounts ? order.amounts.tax.toLocaleString() : '0'}</span>
+                        </div>
+                        <div class="flex justify-between font-bold text-lg border-t pt-2">
+                            <span>Total:</span>
+                            <span class="text-green-600">₦${order.amounts ? order.amounts.total.toLocaleString() : '0'}</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <p class="text-blue-800"><strong>Payment Method:</strong> ${order.paymentMethod || 'N/A'}</p>
+                        <p class="text-blue-800"><strong>Ordered:</strong> ${order.createdAt ? new Date(order.createdAt).toLocaleString() : 'N/A'}</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('modalTitle').textContent = 'Order #' + order.id;
+            document.getElementById('modalContent').innerHTML = modalContent;
+            document.getElementById('orderModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('orderModal').classList.add('hidden');
+            currentOrderIdModal = null;
+        }
+
+        function confirmBankTransfer(orderId) {
+            if (!confirm('Mark this bank transfer as completed?')) return;
+            
+            // Update in orders
+            let orders = JSON.parse(localStorage.getItem('orders')) || [];
+            const idx = orders.findIndex(o => o.id === orderId);
+            if (idx !== -1) {
+                orders[idx].status = 'completed';
+                orders[idx].completedAt = new Date().toISOString();
+                localStorage.setItem('orders', JSON.stringify(orders));
+            }
+            
+            // Update in pendingBankTransfers
+            let pending = JSON.parse(localStorage.getItem('pendingBankTransfers')) || [];
+            const pidx = pending.findIndex(o => o.id === orderId);
+            if (pidx !== -1) {
+                pending[pidx].status = 'completed';
+                pending[pidx].completedAt = new Date().toISOString();
+                localStorage.setItem('pendingBankTransfers', JSON.stringify(pending));
+            }
+            
+            alert('Order marked as completed!');
+            loadOrders();
+            updateStatistics();
+        }
+
+        function updateStatistics() {
+            const completed = allOrdersData.filter(o => (o.status || '').toLowerCase() === 'completed').length;
+            const pending = allOrdersData.filter(o => (o.status || '').toLowerCase() === 'pending' || (o.status || '').toLowerCase() === 'pending_verification').length;
+            const totalRevenue = allOrdersData.reduce((sum, o) => sum + ((o.amounts && o.amounts.total) || 0), 0);
+
+            document.getElementById('statTotalOrders').textContent = allOrdersData.length;
+            document.getElementById('statTotalRevenue').textContent = '₦' + Number(totalRevenue).toLocaleString();
+            document.getElementById('statCompleted').textContent = completed;
+            document.getElementById('statPending').textContent = pending;
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await logoutUser();
+        });
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            loadOrders();
+            updateStatistics();
+        }, 30000);
+    </script>
+</body>
+</html>

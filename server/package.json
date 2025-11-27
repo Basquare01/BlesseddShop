@@ -1,0 +1,15 @@
+{
+  "name": "blessedshop-flutterwave-webhook",
+  "version": "1.0.0",
+  "description": "Small webhook and verify server for BlessedShop Flutterwave integration (for testing)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.7",
+    "dotenv": "^16.0.3"
+  }
+}
