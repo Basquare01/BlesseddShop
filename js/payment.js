@@ -25,7 +25,8 @@ function generateOrderReference() {
 
 // Create order object
 function createOrder(cartItems, subtotal, formData) {
-    const shipping = subtotal > 100 ? 0 : 10;
+    // Shipping scaled to NGN: free over NGN 100,000, otherwise NGN 10,000
+    const shipping = subtotal > 100000 ? 0 : 10000;
     const tax = subtotal * 0.1;
     const total = subtotal + shipping + tax;
 

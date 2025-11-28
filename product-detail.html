@@ -70,7 +70,7 @@
                         <p class="text-gray-600 text-lg mb-4">${product.description}</p>
                         <p class="text-gray-500 mb-2"><strong>Category:</strong> ${product.category}</p>
                         <p class="text-gray-500 mb-2"><strong>Stock:</strong> ${product.stock || 'Available'}</p>
-                        <p class="text-blue-600 font-bold text-4xl mb-8">$${product.price}</p>
+                        <p class="text-blue-600 font-bold text-4xl mb-8">₦${product.price.toLocaleString()}</p>
                         
                         <div class="flex gap-4">
                             <input type="number" id="quantity" class="border rounded-lg px-4 py-2 w-20" value="1" min="1">

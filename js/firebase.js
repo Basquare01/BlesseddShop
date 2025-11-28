@@ -279,9 +279,9 @@ const mockProducts = [
     }
 ];
 
-// Store mock products in localStorage
-if (!localStorage.getItem('mockProducts')) {
-    localStorage.setItem('mockProducts', JSON.stringify(mockProducts));
-}
+// Multiply all monetary figures by 1000 and store mock products in localStorage
+const productsToStore = mockProducts.map(p => ({ ...p, price: Number(p.price) * 1000 }));
+// Always overwrite mockProducts so changes are visible immediately
+localStorage.setItem('mockProducts', JSON.stringify(productsToStore));
 
 console.log('Firebase configuration loaded (mock)');

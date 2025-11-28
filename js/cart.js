@@ -148,9 +148,10 @@ function updateCartCount() {
 
 // Calculate shipping cost
 function getShippingCost(subtotal) {
-    // Free shipping on orders over $100
-    if (subtotal > 100) return 0;
-    return 10;
+    // Free shipping on orders over NGN 100,000 (previously $100)
+    // Shipping fee: NGN 10,000 (previously $10)
+    if (subtotal > 100000) return 0;
+    return 10000;
 }
 
 // Calculate tax (10% tax rate)
@@ -169,10 +170,10 @@ function getOrderSummary() {
 
         return {
             items: cart,
-            subtotal: subtotal.toFixed(2),
-            shipping: shipping.toFixed(2),
-            tax: tax.toFixed(2),
-            total: total.toFixed(2),
+            subtotal: Math.round(subtotal),
+            shipping: Math.round(shipping),
+            tax: Math.round(tax),
+            total: Math.round(total),
             itemCount: getCartCount()
         };
     } catch (error) {

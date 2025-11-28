@@ -179,14 +179,15 @@
             `).join('');
 
             const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const shipping = subtotal > 100 ? 0 : 10;
+            // Adjust shipping rule to NGN scale: free over NGN 100,000, else NGN 10,000
+            const shipping = subtotal > 100000 ? 0 : 10000;
             const tax = subtotal * 0.1;
             const total = subtotal + shipping + tax;
 
             document.getElementById('subtotal').textContent = '₦' + subtotal.toLocaleString();
             document.getElementById('shipping').textContent = '₦' + shipping.toLocaleString();
-            document.getElementById('tax').textContent = '₦' + tax.toLocaleString();
-            document.getElementById('total').textContent = '₦' + total.toLocaleString();
+            document.getElementById('tax').textContent = '₦' + Math.round(tax).toLocaleString();
+            document.getElementById('total').textContent = '₦' + Math.round(total).toLocaleString();
         }
 
         document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
