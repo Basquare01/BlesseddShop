@@ -23,6 +23,71 @@ const mockFirebaseApp = {
 
 // Sample product data for demo (agricultural categories)
 const mockProducts = [
+    // Produce (7) - displayed first
+    {
+        id: "p-001",
+        name: "Mixed Farm Produce Crate",
+        price: 3500,
+        category: "produce",
+        description: "Assorted fresh farm produce: seasonal vegetables and fruits, hand-selected for quality.",
+        image: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8RmFybSUyMHByb2R1Y2V8ZW58MHx8MHx8fDA%3D",
+        stock: 120
+    },
+    {
+        id: "p-002",
+        name: "Fresh Vegetables Crate",
+        price: 2800,
+        category: "produce",
+        description: "Locally harvested fresh vegetables — great for markets and home cooking.",
+        image: "https://images.unsplash.com/photo-1626132661848-cc00e454c2c3?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fEZhcm0lMjBwcm9kdWNlfGVufDB8fDB8fHww",
+        stock: 140
+    },
+    {
+        id: "p-003",
+        name: "Yam Tubers (Pack)",
+        price: 4200,
+        category: "produce",
+        description: "Premium yam tubers, suitable for planting or cooking — high quality and well-sorted.",
+        image: "https://plus.unsplash.com/premium_photo-1675365780148-a00379c54123?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8eWFtfGVufDB8fDB8fHww",
+        stock: 80
+    },
+    {
+        id: "p-004",
+        name: "Aromatic Rice Bag (25kg)",
+        price: 9800,
+        category: "produce",
+        description: "Fragrant rice bag for everyday cooking — carefully milled and packaged.",
+        image: "https://plus.unsplash.com/premium_photo-1705338026411-00639520a438?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8cmljZXxlbnwwfHwwfHx8MA%3D%3D",
+        stock: 200
+    },
+    {
+        id: "p-005",
+        name: "Beans (Bag 25kg)",
+        price: 7600,
+        category: "produce",
+        description: "High-quality dry beans (cowpea/beans) — ideal for resale or large kitchens.",
+        image: "https://plus.unsplash.com/premium_photo-1671130295735-25af5e78d40c?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTN8fGJlYW5zfGVufDB8fDB8fHww",
+        stock: 160
+    },
+    {
+        id: "p-006",
+        name: "Maize (Bag 50kg)",
+        price: 12500,
+        category: "produce",
+        description: "Dried maize kernels, suitable for milling or animal feed — well-dried and cleaned.",
+        image: "https://images.unsplash.com/photo-1651667343153-6dc318e27e41?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWFpemV8ZW58MHx8MHx8fDA%3D",
+        stock: 220
+    },
+    {
+        id: "p-007",
+        name: "Millet (Bag 25kg)",
+        price: 9800,
+        category: "produce",
+        description: "Cleaned millet suitable for local dishes and porridge — well-sorted and packaged.",
+        image: "https://images.unsplash.com/photo-1653580524515-77b19c176b88?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8bWlsbGV0fGVufDB8fDB8fHww",
+        stock: 110
+    },
+
     // Seeds (4)
     {
         id: "s-001",
